@@ -1,0 +1,58 @@
+name: Deploy to Fabric
+
+# Approach B: the repo is the source of truth. Every merge to main deploys to
+# Test automatically, then to Prod once a reviewer approves.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "open_meteo_git_folder/**"
+      - "scripts/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two deployments at once.
+concurrency:
+  group: fabric-deploy
+  cancel-in-progress: false
+
+env:
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+    environment: test            # GitHub Environment holding TEST_WORKSPACE_ID
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install fabric-cicd azure-identity pyyaml
+      - run: python scripts/validate_repo.py open_meteo_git_folder
+      - name: Deploy to Test
+        env:
+          FABRIC_WORKSPACE_ID: ${{ vars.FABRIC_WORKSPACE_ID }}
+          FABRIC_ENVIRONMENT: TEST
+        run: python scripts/deploy.py
+
+  deploy-prod:
+    needs: deploy-test
+    runs-on: ubuntu-latest
+    environment: prod            # configure "Required reviewers" on this environment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install fabric-cicd azure-identity pyyaml
+      - name: Deploy to Prod
+        env:
+          FABRIC_WORKSPACE_ID: ${{ vars.FABRIC_WORKSPACE_ID }}
+          FABRIC_ENVIRONMENT: PROD
+        run: python scripts/deploy.py
