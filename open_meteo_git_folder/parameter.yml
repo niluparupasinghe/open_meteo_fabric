@@ -11,8 +11,8 @@ find_replace:
       item_type: "Notebook"
 
     # Dev lakehouse id (default lakehouse + known_lakehouses) -> lakehouse in target workspace
-    #- find_value: "75d5c275-971a-42cc-9e01-7ea11eab00dd"
-    #  replace_value:
-    #      TEST: "$items.Lakehouse.open_meteo.$id"
-    #      PROD: "$items.Lakehouse.open_meteo.$id"
-    #  item_type: "Notebook"
+    - find_value: "75d5c275-971a-42cc-9e01-7ea11eab00dd"
+      replace_value:
+          TEST: "$items.Lakehouse.open_meteo.$id"
+          PROD: "$items.Lakehouse.open_meteo.$id"
+      item_type: "Notebook"
