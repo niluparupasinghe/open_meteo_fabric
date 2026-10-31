@@ -1,0 +1,42 @@
+name: CI
+
+# Runs on every pull request into develop or main. Make this check "required"
+# in branch protection so a failing PR cannot be merged.
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - "open_meteo_git_folder/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        run: pip install pyyaml ruff
+
+      - name: Validate Fabric item definitions
+        run: python scripts/validate_repo.py open_meteo_git_folder
+
+      - name: Lint notebooks and scripts
+        # Only real errors: syntax errors and undefined names.
+        # Notebook-only lines (!pip ...) are turned into comments first.
+        run: |
+          mkdir -p /tmp/nb_lint
+          for f in $(find open_meteo_git_folder -name notebook-content.py); do
+            out="/tmp/nb_lint/$(echo "$f" | tr '/' '_')"
+            sed -E 's/^([[:space:]]*)([!%])/\1# \2/' "$f" > "$out"
+          done
+          ruff check --select E9,F63,F7,F82 /tmp/nb_lint scripts

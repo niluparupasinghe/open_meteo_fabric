@@ -1,0 +1,1 @@
+This is an auto-created file for open_meteo_git_folder
