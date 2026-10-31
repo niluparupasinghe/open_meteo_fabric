@@ -1,0 +1,18 @@
+# fabric-cicd parameter file. Lives in the root of the repository_directory.
+# Replaces Dev-specific ids with the ids of the workspace being deployed to.
+# Environment keys (TEST, PROD) must match FABRIC_ENVIRONMENT in the deploy workflow.
+
+find_replace:
+    # Dev workspace id hardcoded in the notebook metadata -> target workspace id
+    - find_value: "9f3e961b-8055-4ad0-a1c2-bd98cd12e3d9"
+      replace_value:
+          TEST: "$workspace.$id"
+          PROD: "$workspace.$id"
+      item_type: "Notebook"
+
+    # Dev lakehouse id (default lakehouse + known_lakehouses) -> lakehouse in target workspace
+    - find_value: "75d5c275-971a-42cc-9e01-7ea11eab00dd"
+      replace_value:
+          TEST: "$items.Lakehouse.open_meteo.$id"
+          PROD: "$items.Lakehouse.open_meteo.$id"
+      item_type: "Notebook"
